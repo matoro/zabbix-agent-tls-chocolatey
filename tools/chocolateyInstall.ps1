@@ -1,30 +1,35 @@
-﻿$version        = '3.4.6'
+﻿$version        = '3.4.11'
 $id             = 'zabbix-agent'
 $title          = 'Zabbix Agent'
-$url            = "https://www.zabbix.com/downloads/$version/zabbix_agents_$version.win.zip"
-$url64          = $url
-$checksum       = "7ca9e6d059032d9d5b6c49a853850bc9"
+$url            = "https://support.zabbix.com/secure/attachment/62526/zabbix-$version-openssl1.1.0h-win32.zip"
+$url64          = "https://support.zabbix.com/secure/attachment/62525/zabbix-$version-openssl1.1.0h-win64.zip"
+$checksum       = "ab880f1ab3eddda6c7fbf19dd188a080"
 $checksumType   = "md5"
-$checksum64     = $checksum
+$checksum64     = "48ebd868443d51c0c709888001f3a15a"
 $checksumType64 = $checksumType
 
+$is64bit = (Get-WmiObject -Class Win32_OperatingSystem | Select-Object OSArchitecture) -match '64'
+
+$service = Get-WmiObject -Class Win32_Service -Filter "Name=`'$title`'"
 
 $configDir    = Join-Path $env:PROGRAMDATA 'zabbix'
 $zabbixConf   = Join-Path $configDir 'zabbix_agentd.conf'
 
 $installDir   = Join-Path $env:PROGRAMFILES $title
+$installDirHeaders  = Join-Path $installDir 'dev'
 $zabbixAgentd = Join-Path $installDir 'zabbix_agentd.exe'
 
 $tempDir      = Join-Path $env:TEMP 'chocolatey\zabbix'
 
-$zipFile      = Join-Path $tempDir "zabbix_agents_$version.win.zip"
+if ($is64bit) {
+  $zipFile      = Join-Path $tempDir "zabbix-$version-openssl1.1.0h-win64.zip"
+} else {
+  $zipFile      = Join-Path $tempDir "zabbix-$version-openssl1.1.0h-win32.zip"
+}
 $sampleConfig = Join-Path $tempDir 'conf\zabbix_agentd.win.conf'
-$binFiles     = @('zabbix_agentd.exe', 'zabbix_get.exe', 'zabbix_sender.exe')
-
-
-$is64bit = (Get-WmiObject -Class Win32_OperatingSystem | Select-Object OSArchitecture) -match '64'
-
-$service = Get-WmiObject -Class Win32_Service -Filter "Name=`'$title`'"
+$binFiles     = @('zabbix_agentd.exe', 'zabbix_get.exe', 'zabbix_sender.exe', 
+ 'libcrypto-1_1-x64.dll', 'libssl-1_1-x64.dll', 'msvcr120.dll')
+$headerFiles  = @('zabbix_sender.dll', 'zabbix_sender.h', 'zabbix_sender.lib')
 
 try {
   if ($service) {
@@ -47,14 +52,20 @@ try {
   Get-ChocolateyUnzip "$zipFile" "$tempDir"
 
   if ($is64bit) {
-    $binDir = Join-Path $tempDir 'bin\win64'
+    $binDir = Join-Path $tempDir 'win64'
+    $headerDir = Join-Path $tempDir 'win64\dev'
   } else {
-    $binDir = Join-Path $tempDir 'bin\win32'
+    $binDir = Join-Path $tempDir 'win32'
+    $headerDir = Join-Path $tempDir 'win32\dev'
   }
 
   foreach ($executable in $binFiles ) {
     $file = Join-Path $binDir $executable
     Move-Item $file $installDir -Force
+  }
+  foreach ($header in $headerFiles ) {
+    $file = Join-Path $headerDir $header
+    Move-Item $file $installDirHeaders -Force
   }
 
   if (Test-Path "$installDir\zabbix_agentd.conf") {

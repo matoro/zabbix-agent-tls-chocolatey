@@ -3,10 +3,10 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
     <!-- == PACKAGE SPECIFIC SECTION == -->
-    <id>zabbix-agent</id>
+    <id>zabbix-agent-tls</id>
     <version>3.4.11</version>
     <packageSourceUrl>https://github.com/matoro/zabbix-agent-tls-chocolatey</packageSourceUrl>
-    <owners>Gene Liverman</owners>
+    <owners>matoro</owners>
     <!-- ============================== -->
 
     <!-- == SOFTWARE SPECIFIC SECTION == -->
